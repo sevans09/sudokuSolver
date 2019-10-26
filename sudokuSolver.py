@@ -1,4 +1,20 @@
-import time, random
+import time, random, copy
+
+def copy_list(lst):
+  new_list=[]
+  for i in range(len(lst)):
+    new_list.append([])
+    for j in lst[i]:
+      if(type(j) is int):
+        new_list[i].append(j)
+        # new_list[len(new_list)-1]=j
+      else:
+        new_list[i].append(0)
+  return new_list
+
+def print_board(board):
+  for i in range(len(board)):
+      print(board[i])
 
 class Sudoku:
   def __init__(self, array):
@@ -13,15 +29,17 @@ class Sudoku:
     row=self.board[rowIdx]
     for i in range(len(row)):
       for j in range(len(row)):
-        if (i!=j and row[i]==row[j]):
-          return True
+        if((type(self.board[rowIdx][i]) is int) and (type(self.board[rowIdx][j]) is int)):
+          if (i!=j and row[i]==row[j]):
+            return True
     return False
       
   def dups_in_cols(self, colIdx):
     for i in range(len(self.board)):
       for j in range(len(self.board)):
-        if(i!=j and self.board[i][colIdx]==self.board[j][colIdx]):
-          return True
+        if((type(self.board[i][colIdx]) is int) and (type(self.board[j][colIdx]) is int)):
+          if(i!=j and self.board[i][colIdx]==self.board[j][colIdx]):
+            return True
     return False
 
   # Removes any numbers already contained in the row from the 
@@ -29,7 +47,7 @@ class Sudoku:
   def is_contained_in_row(self, rowIdx, possibles):
     row=self.board[rowIdx]
     for i in range(len(row)):
-      if self.board[rowIdx][i] in possibles:
+      if (type(self.board[rowIdx][i]) is int) and self.board[rowIdx][i] in possibles:
         possibles.remove(self.board[rowIdx][i])
 
     return possibles
@@ -37,7 +55,7 @@ class Sudoku:
   # array of possible numbers
   def is_contained_in_col(self, colIdx, possibles):
     for i in range(len(self.board)):
-      if self.board[i][colIdx] in possibles:
+      if (type(self.board[colIdx][i]) is int) and self.board[i][colIdx] in possibles:
         possibles.remove(self.board[i][colIdx])
 
     return possibles
@@ -53,7 +71,7 @@ class Sudoku:
     elements = []
     for colIdx in range(colStart, colEnd):
       for rowIdx in range (rowStart, rowEnd):
-        if self.board[rowIdx][colIdx] in elements:
+        if type(self.board[rowIdx][colIdx]) is int and self.board[rowIdx][colIdx] in elements:
           return True
         elements.append(self.board[rowIdx][colIdx])
 
@@ -68,44 +86,125 @@ class Sudoku:
 
     for colIdx in range(colStart, colEnd):
       for rowIdx in range (rowStart, rowEnd):
-        if self.board[rowIdx][colIdx] in possibles:
+        if (type(self.board[rowIdx][colIdx]) is int) and self.board[rowIdx][colIdx] in possibles:
           possibles.remove(self.board[rowIdx][colIdx])
 
     return possibles
+  def is_valid(self):
+    for i in range(9):
+      # print(i,end=" ")
+      if(self.dups_in_cols(i) or self.dups_in_rows(i)):
+        return False
+    # print()
+    for i in range(0,9,3):
+      for j in range(0,9,3):
+        if(self.dups_in_box(i,j)):
+          return False
+    return True
+  
+  def finished(self):
+    if(self.is_valid()):
+      for i in range(len(self.board)):
+        for j in range(len(self.board[i])):
+          if(not (self.board[i][j] is int)):
+            return False
+      return True
+    return False
 
 
 class Solution:
-  def __init__(self, Sudoku):
-    self.Sudoku=Sudoku
+  def __init__(self, sudoku):
+    self.sudoku=sudoku
     self.solved=False
     self.frontier=[]
 
   def possible_sols_board(self):
-    for i in range(len(self.Sudoku.board)):
-      for j in range(len(self.Sudoku.board[i])):
-        possibles=range(1,10)
-        possibles=self.Sudoku.is_contained_in_row(i,possibles)
-        possibles=self.Sudoku.is_contained_in_col(i,possibles)
-        possibles=self.Sudoku.is_contained_in_box(i,j,possibles)
-        self.Sudoku.board[i][j]=possibles
-        print("Possibles: ", possibles)
+    for i in range(len(self.sudoku.board)):
+      for j in range(len(self.sudoku.board[i])):
+        if(not(type(self.sudoku.board[i][j]) is int) or self.sudoku.board[i][j]==0):
+          possibles=[x for x in range(1,10)]
+          possibles=self.sudoku.is_contained_in_row(i,possibles)
+          possibles=self.sudoku.is_contained_in_col(j,possibles)
+          possibles=self.sudoku.is_contained_in_box(i,j,possibles)
+          self.sudoku.board[i][j]=possibles
+          # print("Possibles: ", possibles)
+  
     
   # Gets a possible soln for row,col
   def minimal(self):
     row,col,min=0,0,9
-    for i in range(len(self.Sudoku.board)):
-      for j in range(len(self.Sudoku.board[i])):
-        if(len(self.Sudoku.board[i][j])<min):
-          row,col,min=i,j,len(self.Sudoku.board[i][j])
+    for i in range(len(self.sudoku.board)):
+      for j in range(len(self.sudoku.board[i])):
+        if(not(type(self.sudoku.board[i][j]) is int) and len(self.sudoku.board[i][j])<min):
+          row,col,min=i,j,len(self.sudoku.board[i][j])
     
-    print("Minimal row and col is ", row, col)
-    return row, col
+    # print("Minimal row and col is ", row, col)
+    return row, col, min
   
   # Solves the Sudoku
   def solve(self):
-    current=possible_sols_board()
-    minrow,mincol = minimal()
-    pass
+    while(not(self.sudoku.finished())):
+      self.possible_sols_board()
+      minrow,mincol, minl = self.minimal()
+      if(minl==9 and minrow==0 and mincol==0):
+        break
+      if(minl==0):
+        if(len(self.frontier)>0):
+          if(copy_list(self.sudoku.board)==copy.deepcopy(self.frontier[-1][0])):
+            del self.frontier[-1]
+          self.sudoku.board=copy.deepcopy(self.frontier[-1][0])
+        else:
+          print("Solving Failed")
+          print_board(copy_list(self.sudoku.board))
+          break
+        # for i in self.frontier:
+        #   print_board(i[0])
+        #   print(i[1:])
+        # break
+        continue
+      # self.sudoku.print()
+      if(len(self.frontier)>0 and self.frontier[-1][0] == copy_list(self.sudoku.board)):
+        # print(len(self.frontier), self.frontier[-1][0])
+        # print(self.sudoku.board)
+        self.frontier[-1][3]+=1
+        if(len(self.sudoku.board[self.frontier[-1][1]][self.frontier[-1][2]])<=self.frontier[-1][3]):
+          del self.frontier[-1]
+          self.sudoku.board=copy.deepcopy(self.frontier[-1][0])
+          continue
+        else:
+          self.sudoku.board[self.frontier[-1][1]][self.frontier[-1][2]]=self.sudoku.board[self.frontier[-1][1]][self.frontier[-1][2]][self.frontier[-1][3]]
+      elif(len(self.sudoku.board[minrow][mincol])>1):
+        self.frontier.append([copy_list(self.sudoku.board),minrow,mincol,0])
+        # print(len(self.frontier))
+        # print(self.frontier[-1][0])
+        # print(self.sudoku.board)
+        self.sudoku.board[minrow][mincol]=self.sudoku.board[minrow][mincol][0]
+        # print(self.sudoku.board)
+      elif(len(self.sudoku.board[minrow][mincol])==1):
+        self.sudoku.board[minrow][mincol]=self.sudoku.board[minrow][mincol][0]
+      else:
+        # print_board(self.sudoku.board)
+        # print()
+        # print_board(self.frontier[-1][0])
+        if(len(self.frontier)>0):
+          if(copy_list(self.sudoku.board)==self.frontier[-1][0]):
+            del self.frontier[-1]
+          self.sudoku.board=copy.deepcopy(self.frontier[-1][0])
+        else:
+          print("Solving Failed")
+          print_board(copy_list(self.sudoku.board))
+          break
+        continue
+      if(not(self.sudoku.is_valid())):
+        if(len(self.frontier)>0):
+          self.sudoku.board=copy.deepcopy(self.frontier[-1][0])
+        else:
+          print("Solving Failed")
+          print_board(copy_list(self.sudoku.board))
+          break
+      # self.sudoku.print()
+      # break
+    
 
   # Check if a valid solution has been found
   def is_valid(self, board):
@@ -126,27 +225,26 @@ class Solution:
 
 def main():
   # easy board
-  board = [[0,7,0,9,0,4,0,0,0],
-            [1,0,0,7,0,2,0,9,4],
-            [0,0,0,0,0,5,1,2,0],
-            [0,0,0,7,8,5,2,0,0],
-            [0,5,8,0,0,0,4,7,0],
-            [0,0,9,4,1,6,0,0,0],
-            [0,5,9,2,0,0,0,0,0],
-            [2,6,0,9,0,7,0,0,5],
-            [0,0,0,8,0,2,0,6,0]]
+  board = [[6,0,8,7,0,2,1,0,0],
+            [4,0,0,0,1,0,0,0,2],
+            [0,2,5,4,0,0,0,0,0],
+            [7,0,1,0,8,0,4,0,5],
+            [0,8,0,0,0,0,0,7,0],
+            [5,0,9,0,6,0,3,0,1],
+            [0,0,0,0,0,6,7,5,0],
+            [2,0,0,0,9,0,0,0,8],
+            [0,0,6,8,0,5,2,0,3]]
 
 	# expert board
-	# board = [
-	#     [8,0,0,0,0,0,0,0,0],
-	#     [0,0,3,6,0,0,0,0,0],
-	#     [0,7,0,0,9,0,2,0,0],
-	#     [0,5,0,0,0,7,0,0,0],
-	#     [0,0,0,0,4,5,7,0,0],
-	#     [0,0,0,1,0,0,0,3,0],
-	#     [0,0,1,0,0,0,0,6,8],
-	#     [0,0,8,5,0,0,0,1,0],
-	#     [0,9,0,0,0,0,4,0,0]]
+  board = [[8,0,0,0,0,0,0,0,0],
+            [0,0,3,6,0,0,0,0,0], 
+            [0,7,0,0,9,0,2,0,0],
+	          [0,5,0,0,0,7,0,0,0],
+            [0,0,0,0,4,5,7,0,0],
+            [0,0,0,1,0,0,0,3,0],
+            [0,0,1,0,0,0,0,6,8],
+            [0,0,8,5,0,0,0,1,0],
+            [0,9,0,0,0,0,4,0,0]]
 
 
   mySudoku = Sudoku(board)
@@ -154,9 +252,10 @@ def main():
   start = time.time()
 
   soln = Solution(mySudoku)
+  soln.solve()
   print( "Solved in {} seconds".format( time.time() - start ) )
   print("Final board:")
-  soln.Sudoku.print()
+  soln.sudoku.print()
 
 if __name__== "__main__":
 	main()
