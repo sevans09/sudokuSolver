@@ -1,4 +1,4 @@
-import time, random, copy
+import time, copy
 
 def copy_list(lst):
   new_list=[]
@@ -7,7 +7,6 @@ def copy_list(lst):
     for j in lst[i]:
       if(type(j) is int):
         new_list[i].append(j)
-        # new_list[len(new_list)-1]=j
       else:
         new_list[i].append(0)
   return new_list
@@ -55,7 +54,7 @@ class Sudoku:
   # array of possible numbers
   def is_contained_in_col(self, colIdx, possibles):
     for i in range(len(self.board)):
-      if (type(self.board[colIdx][i]) is int) and self.board[i][colIdx] in possibles:
+      if (type(self.board[i][colIdx]) is int) and self.board[i][colIdx] in possibles:
         possibles.remove(self.board[i][colIdx])
 
     return possibles
@@ -92,10 +91,8 @@ class Sudoku:
     return possibles
   def is_valid(self):
     for i in range(9):
-      # print(i,end=" ")
       if(self.dups_in_cols(i) or self.dups_in_rows(i)):
         return False
-    # print()
     for i in range(0,9,3):
       for j in range(0,9,3):
         if(self.dups_in_box(i,j)):
@@ -127,7 +124,6 @@ class Solution:
           possibles=self.sudoku.is_contained_in_col(j,possibles)
           possibles=self.sudoku.is_contained_in_box(i,j,possibles)
           self.sudoku.board[i][j]=possibles
-          # print("Possibles: ", possibles)
   
     
   # Gets a possible soln for row,col
@@ -138,7 +134,7 @@ class Solution:
         if(not(type(self.sudoku.board[i][j]) is int) and len(self.sudoku.board[i][j])<min):
           row,col,min=i,j,len(self.sudoku.board[i][j])
     
-    # print("Minimal row and col is ", row, col)
+    # print("Minimal row and col is ", row, col, self.sudoku.board[row][col])
     return row, col, min
   
   # Solves the Sudoku
@@ -157,35 +153,26 @@ class Solution:
           print("Solving Failed")
           print_board(copy_list(self.sudoku.board))
           break
-        # for i in self.frontier:
-        #   print_board(i[0])
-        #   print(i[1:])
-        # break
         continue
-      # self.sudoku.print()
       if(len(self.frontier)>0 and self.frontier[-1][0] == copy_list(self.sudoku.board)):
-        # print(len(self.frontier), self.frontier[-1][0])
-        # print(self.sudoku.board)
         self.frontier[-1][3]+=1
         if(len(self.sudoku.board[self.frontier[-1][1]][self.frontier[-1][2]])<=self.frontier[-1][3]):
           del self.frontier[-1]
-          self.sudoku.board=copy.deepcopy(self.frontier[-1][0])
-          continue
+          if(len(self.frontier) > 0):
+            self.sudoku.board = copy.deepcopy(self.frontier[-1][0])
+            continue
+          else:
+            print("Solving Failed")
+            print_board(copy_list(self.sudoku.board))
+            break
         else:
           self.sudoku.board[self.frontier[-1][1]][self.frontier[-1][2]]=self.sudoku.board[self.frontier[-1][1]][self.frontier[-1][2]][self.frontier[-1][3]]
       elif(len(self.sudoku.board[minrow][mincol])>1):
         self.frontier.append([copy_list(self.sudoku.board),minrow,mincol,0])
-        # print(len(self.frontier))
-        # print(self.frontier[-1][0])
-        # print(self.sudoku.board)
         self.sudoku.board[minrow][mincol]=self.sudoku.board[minrow][mincol][0]
-        # print(self.sudoku.board)
       elif(len(self.sudoku.board[minrow][mincol])==1):
         self.sudoku.board[minrow][mincol]=self.sudoku.board[minrow][mincol][0]
       else:
-        # print_board(self.sudoku.board)
-        # print()
-        # print_board(self.frontier[-1][0])
         if(len(self.frontier)>0):
           if(copy_list(self.sudoku.board)==self.frontier[-1][0]):
             del self.frontier[-1]
@@ -202,8 +189,6 @@ class Solution:
           print("Solving Failed")
           print_board(copy_list(self.sudoku.board))
           break
-      # self.sudoku.print()
-      # break
     
 
   # Check if a valid solution has been found
@@ -226,25 +211,36 @@ class Solution:
 def main():
   # easy board
   board = [[6,0,8,7,0,2,1,0,0],
-            [4,0,0,0,1,0,0,0,2],
-            [0,2,5,4,0,0,0,0,0],
-            [7,0,1,0,8,0,4,0,5],
-            [0,8,0,0,0,0,0,7,0],
-            [5,0,9,0,6,0,3,0,1],
-            [0,0,0,0,0,6,7,5,0],
-            [2,0,0,0,9,0,0,0,8],
-            [0,0,6,8,0,5,2,0,3]]
+           [4,0,0,0,1,0,0,0,2],
+           [0,2,5,4,0,0,0,0,0],
+           [7,0,1,0,8,0,4,0,5],
+           [0,8,0,0,0,0,0,7,0],
+           [5,0,9,0,6,0,3,0,1],
+           [0,0,0,0,0,6,7,5,0],
+           [2,0,0,0,9,0,0,0,8],
+           [0,0,6,8,0,5,2,0,3]]
 
 	# expert board
   board = [[8,0,0,0,0,0,0,0,0],
-            [0,0,3,6,0,0,0,0,0], 
-            [0,7,0,0,9,0,2,0,0],
-	          [0,5,0,0,0,7,0,0,0],
-            [0,0,0,0,4,5,7,0,0],
-            [0,0,0,1,0,0,0,3,0],
-            [0,0,1,0,0,0,0,6,8],
-            [0,0,8,5,0,0,0,1,0],
-            [0,9,0,0,0,0,4,0,0]]
+           [0,0,3,6,0,0,0,0,0],
+           [0,7,0,0,9,0,2,0,0],
+	         [0,5,0,0,0,7,0,0,0],
+           [0,0,0,0,4,5,7,0,0],
+           [0,0,0,1,0,0,0,3,0],
+           [0,0,1,0,0,0,0,6,8],
+           [0,0,8,5,0,0,0,1,0],
+           [0,9,0,0,0,0,4,0,0]]
+
+	# evil board
+  board = [[0,7,0,0,4,2,0,0,0],
+           [0,0,0,0,0,8,6,1,0],
+           [3,9,0,0,0,0,0,0,7],
+	   [0,0,0,0,0,4,0,0,9],
+           [0,0,3,0,0,0,7,0,0],
+           [5,0,0,1,0,0,0,0,0],
+           [8,0,0,0,0,0,0,7,6],
+           [0,5,4,8,0,0,0,0,0],
+           [0,0,0,6,1,0,0,5,0]]
 
 
   mySudoku = Sudoku(board)
